@@ -2,20 +2,20 @@ import React from 'react';
 
 const Table = ({ headers = [], children, className = '' }) => {
   return (
-    <div className={`w-full overflow-x-auto bg-slate-900/40 border border-slate-800 rounded-2xl ${className}`}>
-      <table className="w-full text-left border-collapse text-sm text-slate-350">
+    <div className={`w-full overflow-x-auto bg-white border border-rose-100 rounded-2xl shadow-sm shadow-rose-100/30 ${className}`}>
+      <table className="w-full text-left border-collapse text-sm text-slate-700">
         {headers.length > 0 && (
           <thead>
-            <tr className="border-b border-slate-800 bg-slate-950/50">
+            <tr className="border-b border-rose-100 bg-[#fdf8f8]">
               {headers.map((header, idx) => (
-                <th key={idx} className="px-6 py-4 font-bold text-slate-400 uppercase tracking-wider text-xs">
+                <th key={idx} className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-xs">
                   {header}
                 </th>
               ))}
             </tr>
           </thead>
         )}
-        <tbody className="divide-y divide-slate-800/60">
+        <tbody className="divide-y divide-rose-50">
           {children}
         </tbody>
       </table>

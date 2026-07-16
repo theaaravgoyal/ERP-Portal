@@ -3,4 +3,13 @@
 @theme {
   --color-brand-red: #E31C1C;
   --color-brand-red-hover: #b81414;
+  --color-pastel-bg: #ffffff;
+  --color-pastel-card: #fdf8f8;
+  --color-pastel-pink: #fce8ee;
+  --color-pastel-rose: #fde4ec;
+  --color-sidebar-border: #f5dde5;
+}
+
+body {
+  background-color: #ffffff;
 }
