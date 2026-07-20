@@ -33,14 +33,7 @@ const seedData = async () => {
         icon: 'ClipboardList',
         description: 'Read and write attendance access logs.'
       },
-      {
-        name: 'Site Module Access',
-        code: 'access_site',
-        module: 'Site Management',
-        route: '/site-management',
-        icon: 'Building2',
-        description: 'Manage construction parameters and logistics.'
-      },
+
       {
         name: 'Fees Module Access',
         code: 'access_fees',
@@ -83,15 +76,12 @@ const seedData = async () => {
 
     // 3. Map Roles to Permissions (RolePermission)
     const rolePermissionMappings = [
-      // Super Admin gets all permissions
       { roleName: 'Super Admin', permissionCode: 'access_attendance' },
-      { roleName: 'Super Admin', permissionCode: 'access_site' },
       { roleName: 'Super Admin', permissionCode: 'access_fees' },
       { roleName: 'Super Admin', permissionCode: 'access_leads' },
 
       // Module Admins get respective permissions
       { roleName: 'Attendance Admin', permissionCode: 'access_attendance' },
-      { roleName: 'Website Admin', permissionCode: 'access_site' },
       { roleName: 'Fees Admin', permissionCode: 'access_fees' }
     ];
 

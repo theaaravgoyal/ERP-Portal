@@ -13,15 +13,15 @@ const Input = ({
   ...props 
 }) => {
   return (
-    <div className={`space-y-1.5 w-full ${className}`}>
+    <div className={`space-y-1.5 flex justify-center flex-col gap-1 w-full ${className}`}>
       {label && (
-        <label className="text-xs font-semibold uppercase tracking-wider text-slate-400" htmlFor={id}>
+        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600" htmlFor={id}>
           {label}
         </label>
       )}
       <div className="relative group">
         {Icon && (
-          <Icon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-brand-red transition-colors" size={18} />
+          <Icon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-red transition-colors" size={18} />
         )}
         <input
           id={id}
@@ -29,11 +29,11 @@ const Input = ({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className={`w-full py-3 rounded-xl bg-slate-950 border text-slate-100 placeholder-slate-600 outline-none focus:ring-4 focus:ring-brand-red/10 transition-all text-sm
+          className={`w-full py-3 rounded-lg bg-[#fdf8f8] border text-slate-800 placeholder-slate-400 outline-none focus:ring-4 focus:ring-brand-red/10 transition-all text-sm
             ${Icon ? 'pl-12' : 'pl-4'}
-            ${error 
-              ? 'border-rose-500/55 focus:border-rose-500/80 focus:ring-rose-500/10' 
-              : 'border-slate-800 focus:border-brand-red/50'
+            ${error
+              ? 'border-rose-300 focus:border-rose-400' 
+              : 'border-rose-100 focus:border-brand-red/40'
             }
           `}
           {...props}

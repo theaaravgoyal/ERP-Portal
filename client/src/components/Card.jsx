@@ -4,8 +4,8 @@ const Card = ({ children, className = '', onClick, ...props }) => {
   return (
     <div
       onClick={onClick}
-      className={`bg-slate-900/40 border border-slate-800 rounded-2xl p-6 md:p-8 transition-all duration-300 shadow-xl
-        ${onClick ? 'cursor-pointer hover:-translate-y-1.5 hover:bg-slate-900/65' : ''}
+      className={`bg-[#fdf8f8] border border-rose-100 rounded-2xl p-6 md:p-8 transition-all duration-300 shadow-sm shadow-rose-100/30
+        ${onClick ? 'cursor-pointer hover:-translate-y-1.5 hover:shadow-md hover:shadow-rose-200/40 hover:border-rose-200' : ''}
         ${className}
       `}
       {...props}

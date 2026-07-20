@@ -197,7 +197,7 @@ export default function LeadDashboard() {
   };
 
   return (
-    <div className="bg-[#F9F8F6] text-slate-800 p-6 md:p-8 rounded-3xl min-h-[calc(100vh-140px)] font-sans border border-[#E8E6E1] -mx-6 md:-mx-10 -my-6 md:-my-10 flex flex-col justify-between">
+    <div className="bg-white text-slate-800 p-6 md:p-8 rounded-3xl min-h-[calc(100vh-140px)] font-sans  -mx-6 md:-mx-10 -my-6 md:-my-10 flex flex-col justify-between">
       
       {/* 1. Header Area */}
       <div className="space-y-6">
