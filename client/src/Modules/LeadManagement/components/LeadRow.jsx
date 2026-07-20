@@ -58,6 +58,7 @@ const getStatusPillClass = (st) => {
     case 'pending':
       return 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]';
     case 'contacted':
+    case 'connected':
       return 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]';
     case 'follow-up':
       return 'bg-[#FAF5FF] text-[#7C3AED] border-[#E9D5FF]';
@@ -75,6 +76,7 @@ const getAvatarBgClass = (st) => {
     case 'pending':
       return 'bg-[#3b82f6]'; // blue
     case 'contacted':
+    case 'connected':
       return 'bg-[#f59e0b]'; // orange/amber
     case 'follow-up':
       return 'bg-[#a855f7]'; // purple
@@ -205,7 +207,7 @@ export default function LeadRow({
             }}
           >
             <option value="New">New</option>
-            <option value="Contacted">Contacted</option>
+            <option value="Connected">Connected</option>
             <option value="Follow-up">Follow-up</option>
             <option value="Converted">Converted</option>
             <option value="Not Interested">Not Interested</option>
@@ -213,20 +215,6 @@ export default function LeadRow({
         </div>
 
         <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => onOpenCallLog(lead)}
-            className="w-8 h-8 rounded-full border border-[#DEDCD8] hover:border-slate-400 text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center bg-white cursor-pointer"
-            title="Log Call Activity"
-          >
-            <Phone size={13} />
-          </button>
-          <button
-            onClick={() => onOpenWhatsApp(lead)}
-            className="w-8 h-8 rounded-full border border-[#DEDCD8] hover:border-slate-400 text-slate-500 hover:text-slate-850 transition-colors flex items-center justify-center bg-white cursor-pointer"
-            title="Send WhatsApp Template"
-          >
-            <MessageSquare size={13} />
-          </button>
           <button
             onClick={() => {
               if (window.confirm(`Are you sure you want to delete lead ${lead.name}?`)) {

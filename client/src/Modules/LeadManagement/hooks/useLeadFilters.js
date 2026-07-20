@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 
 export const useLeadFilters = (leads, staffSummary) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeStatusFilter, setActiveStatusFilter] = useState(null);
+  const [activeStatusFilter, setActiveStatusFilter] = useState('New');
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedSource, setSelectedSource] = useState('');
   const [selectedAssignment, setSelectedAssignment] = useState('');
@@ -59,8 +59,19 @@ export const useLeadFilters = (leads, staffSummary) => {
         // 2. Status Match
         if (activeStatusFilter) {
           const status = lead.status || 'New';
-          if (status.toLowerCase() !== activeStatusFilter.toLowerCase()) {
-            return false;
+          const norm = status.toLowerCase();
+          const hasActivity = latestActivitiesMap && latestActivitiesMap[lead._id || lead.id];
+          
+          if (activeStatusFilter === 'New') {
+            const isNew = (norm === 'new' || norm === 'pending') && !hasActivity;
+            if (!isNew) return false;
+          } else if (activeStatusFilter === 'Connected') {
+            const isConnected = norm === 'connected' || norm === 'contacted' || ((norm === 'new' || norm === 'pending') && hasActivity);
+            if (!isConnected) return false;
+          } else {
+            if (norm !== activeStatusFilter.toLowerCase()) {
+              return false;
+            }
           }
         }
 

@@ -75,6 +75,7 @@ export const activityApi = {
           staffName: a.staffName,
           callStatus: a.callStatus,
           createdAt: a.createdAt,
+          followUpDate: a.followUpDate || null,
         };
       }
     });

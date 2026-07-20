@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Lock, Mail, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import Input from '../../components/Input';
@@ -10,6 +10,7 @@ import { APP_CONFIG } from '../../config/app';
 const Login = () => {
   const { login, token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,12 +18,15 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // If already authenticated, redirect straight to dashboard
+  // Get path from state to redirect to, otherwise go to dashboard
+  const from = location.state?.from?.pathname || ROUTES.DASHBOARD;
+
+  // If already authenticated, redirect straight to target page
   useEffect(() => {
     if (token) {
-      navigate(ROUTES.DASHBOARD);
+      navigate(from, { replace: true });
     }
-  }, [token, navigate]);
+  }, [token, navigate, from]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,7 +42,7 @@ const Login = () => {
     setIsSubmitting(false);
 
     if (result.success) {
-      navigate(ROUTES.DASHBOARD);
+      navigate(from, { replace: true });
     } else {
       setErrorMessage(result.error);
     }

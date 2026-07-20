@@ -33,6 +33,7 @@ export default function LeadDashboard() {
 
   // Selected lead for full details view
   const [selectedLead, setSelectedLead] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Active tab state
   const [activeTab, setActiveTab] = useState('online');
@@ -56,6 +57,35 @@ export default function LeadDashboard() {
     isFiltered,
     latestActivitiesMap
   } = useLeadFilters(leads, staffSummary);
+
+  // Compute today's follow-up reminders
+  const todayFollowUps = useMemo(() => {
+    const list = [];
+    if (!leads || !Array.isArray(leads)) return list;
+    leads.forEach((lead) => {
+      if (!lead) return;
+      const leadId = lead._id || lead.id;
+      if (!leadId) return;
+      const latest = latestActivitiesMap && latestActivitiesMap[leadId];
+      if (latest && latest.followUpDate) {
+        const followDate = new Date(latest.followUpDate);
+        const today = new Date();
+        const sameDay = followDate.getDate() === today.getDate() &&
+                        followDate.getMonth() === today.getMonth() &&
+                        followDate.getFullYear() === today.getFullYear();
+        const isOverdue = followDate < today;
+        if (sameDay || isOverdue) {
+          list.push({
+            lead,
+            followUpDate: latest.followUpDate,
+            isOverdue,
+            time: followDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+          });
+        }
+      }
+    });
+    return list;
+  }, [leads, latestActivitiesMap]);
 
   // States for row action overlays
   const [rowActionLead, setRowActionLead] = useState(null);
@@ -84,32 +114,33 @@ export default function LeadDashboard() {
   const statsCounts = useMemo(() => {
     const counts = {
       New: 0,
-      Contacted: 0,
+      Connected: 0,
       'Follow-up': 0,
       Converted: 0,
       'Not Interested': 0,
     };
     leads.forEach((l) => {
+      const leadId = l._id || l.id;
+      const hasActivity = latestActivitiesMap && latestActivitiesMap[leadId];
       const status = l.status || 'New';
-      if (counts[status] !== undefined) {
-        counts[status] += 1;
+      const norm = status.toLowerCase();
+      
+      if ((norm === 'new' || norm === 'pending') && hasActivity) {
+        counts.Connected += 1;
+      } else if (norm === 'new' || norm === 'pending') {
+        counts.New += 1;
+      } else if (norm === 'connected' || norm === 'contacted') {
+        counts.Connected += 1;
+      } else if (norm === 'converted') {
+        counts.Converted += 1;
+      } else if (norm === 'follow-up' || norm === 'followup') {
+        counts['Follow-up'] += 1;
       } else {
-        const norm = status.toLowerCase();
-        if (norm === 'pending' || norm === 'new') {
-          counts.New += 1;
-        } else if (norm === 'contacted') {
-          counts.Contacted += 1;
-        } else if (norm === 'converted') {
-          counts.Converted += 1;
-        } else if (norm === 'follow-up' || norm === 'followup') {
-          counts['Follow-up'] += 1;
-        } else {
-          counts['Not Interested'] += 1;
-        }
+        counts['Not Interested'] += 1;
       }
     });
     return counts;
-  }, [leads]);
+  }, [leads, latestActivitiesMap]);
 
   // Simulator
   const handleSimulateWebsiteInquiry = async () => {
@@ -189,7 +220,7 @@ export default function LeadDashboard() {
         ...data
       });
       if (rowActionLead.status === 'New' || rowActionLead.status === 'pending') {
-        await handleUpdateStatus(rowActionLead._id || rowActionLead.id, 'Contacted');
+        await handleUpdateStatus(rowActionLead._id || rowActionLead.id, 'Connected');
       }
       setRowActionLead(null);
       refreshStaffSummary();
@@ -220,18 +251,82 @@ export default function LeadDashboard() {
             </button>
             
             {/* Bell notification button */}
-            <button className="bg-white border border-[#DEDCD8] hover:bg-[#F0EEEA] text-slate-650 hover:text-slate-850 p-2 rounded-full transition-colors relative cursor-pointer shadow-sm w-9 h-9 flex items-center justify-center">
-              <Bell size={15} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-[#E31C1C] rounded-full" />
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`bg-white border border-[#DEDCD8] hover:bg-[#F0EEEA] text-slate-650 hover:text-slate-850 p-2 rounded-full transition-colors relative cursor-pointer shadow-sm w-9 h-9 flex items-center justify-center ${
+                  todayFollowUps.some(item => item.isOverdue) 
+                    ? 'animate-bell-pulse-red' 
+                    : todayFollowUps.length > 0 
+                    ? 'animate-bell-ring' 
+                    : ''
+                }`}
+                title="Notifications"
+              >
+                <Bell size={15} />
+                {todayFollowUps.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#E31C1C] text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-md">
+                    {todayFollowUps.length}
+                  </span>
+                )}
+              </button>
+              
+              {showNotifications && (
+                <div className="absolute right-0 mt-2.5 w-80 bg-white border border-[#E8E6E1] rounded-2xl shadow-xl z-50 p-4 space-y-3 animate-fade-in">
+                  <div className="flex items-center justify-between border-b border-[#EBEAE6] pb-2">
+                    <span className="text-xs font-black text-slate-800 tracking-tight">Today's Follow-up Tasks</span>
+                    <span className="text-[9px] bg-rose-50 text-[#E31C1C] px-2 py-0.5 rounded-full font-black border border-rose-100 uppercase tracking-wider">{todayFollowUps.length} Pending</span>
+                  </div>
+                  
+                  <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
+                    {todayFollowUps.length === 0 ? (
+                      <div className="py-6 text-center text-slate-450 text-xs font-semibold leading-relaxed">
+                        🎉 No follow-up reminders scheduled for today!
+                      </div>
+                    ) : (
+                      todayFollowUps.map(({ lead, time, isOverdue }) => (
+                        <div 
+                          key={lead._id || lead.id}
+                          onClick={() => {
+                            setSelectedLead(lead);
+                            setShowNotifications(false);
+                          }}
+                          className="p-3 bg-[#FAF9F6] hover:bg-[#FFF5F5] border border-[#E8E6E1] hover:border-[#FCD4D4] rounded-xl cursor-pointer transition-all space-y-1 group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-800 group-hover:text-[#E31C1C] transition-colors">{lead.name}</span>
+                            {isOverdue ? (
+                              <span className="text-[9px] text-white font-black uppercase tracking-wider bg-[#E31C1C] px-2 py-0.5 rounded-md animate-pulse">
+                                Overdue • {time}
+                              </span>
+                            ) : (
+                              <span className="text-[9px] text-[#E31C1C] font-black uppercase tracking-wider bg-[#FFF5F5] border border-[#FCD4D4] px-1.5 py-0.2 rounded-md">
+                                {time}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-slate-500 font-semibold leading-normal">
+                            Please contact regarding <span className="text-slate-700 font-bold">{lead.course}</span> today.
+                          </p>
+                          <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest pt-1 border-t border-[#EBEAE6]/40 mt-1 flex items-center gap-1">
+                            <span>📞 Call or Send message</span>
+                            <span className="text-[#E31C1C] opacity-0 group-hover:opacity-100 transition-opacity ml-auto">View Profile →</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Profile Avatar */}
             <div className="flex items-center gap-2.5 pl-2 border-l border-[#DEDCD8]">
               <div className="w-9 h-9 rounded-full bg-[#E31C1C] text-white font-black text-sm flex items-center justify-center shrink-0 shadow-inner">
-                AG
+                AJ
               </div>
               <div className="flex flex-col hidden sm:flex">
-                <span className="text-slate-800 text-xs font-black leading-tight">Aarav Goyal</span>
+                <span className="text-slate-800 text-xs font-black leading-tight">Addish jain</span>
                 <span className="text-[#E31C1C] text-[9px] font-black tracking-wider uppercase mt-0.5">ADMIN</span>
               </div>
             </div>
@@ -280,6 +375,7 @@ export default function LeadDashboard() {
               onClose={() => setSelectedLead(null)}
               onUpdateStatus={handleUpdateStatus}
               onDeleteLead={handleDelete}
+              onActivityAdded={refreshStaffSummary}
             />
           </div>
         ) : activeTab !== 'online' ? (
@@ -379,7 +475,7 @@ export default function LeadDashboard() {
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 bg-[#f59e0b] rounded-full inline-block" />
-              <span className="text-slate-600">{statsCounts.Contacted} Contacted</span>
+              <span className="text-slate-600">{statsCounts.Connected} Connected</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 bg-[#a855f7] rounded-full inline-block" />
