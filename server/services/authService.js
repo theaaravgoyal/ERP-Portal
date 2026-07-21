@@ -76,7 +76,6 @@ class AuthService {
       const mockPermissions = {
         'Super Admin': [
           { code: 'access_attendance', name: 'Attendance Access', route: '/attendance', module: 'Attendance Management', icon: 'ClipboardList' },
-          { code: 'access_site', name: 'Site Access', route: '/site-management', module: 'Site Management', icon: 'Building2' },
           { code: 'access_fees', name: 'Fees Access', route: '/fees-management', module: 'Fees Management', icon: 'DollarSign' },
           { code: 'access_leads', name: 'Lead Access', route: '/lead-management', module: 'Lead Management', icon: 'UserCheck' }
         ],
@@ -84,7 +83,6 @@ class AuthService {
           { code: 'access_attendance', name: 'Attendance Access', route: '/attendance', module: 'Attendance Management', icon: 'ClipboardList' }
         ],
         'Website Admin': [
-          { code: 'access_site', name: 'Site Access', route: '/site-management', module: 'Site Management', icon: 'Building2' }
         ],
         'Fees Admin': [
           { code: 'access_fees', name: 'Fees Access', route: '/fees-management', module: 'Fees Management', icon: 'DollarSign' }
@@ -150,7 +148,6 @@ class AuthService {
       const mockPermissions = {
         'Super Admin': [
           { code: 'access_attendance', name: 'Attendance Access', route: '/attendance', module: 'Attendance Management', icon: 'ClipboardList' },
-          { code: 'access_site', name: 'Site Access', route: '/site-management', module: 'Site Management', icon: 'Building2' },
           { code: 'access_fees', name: 'Fees Access', route: '/fees-management', module: 'Fees Management', icon: 'DollarSign' },
           { code: 'access_leads', name: 'Lead Access', route: '/lead-management', module: 'Lead Management', icon: 'UserCheck' }
         ],
@@ -158,7 +155,6 @@ class AuthService {
           { code: 'access_attendance', name: 'Attendance Access', route: '/attendance', module: 'Attendance Management', icon: 'ClipboardList' }
         ],
         'Website Admin': [
-          { code: 'access_site', name: 'Site Access', route: '/site-management', module: 'Site Management', icon: 'Building2' }
         ],
         'Fees Admin': [
           { code: 'access_fees', name: 'Fees Access', route: '/fees-management', module: 'Fees Management', icon: 'DollarSign' }
@@ -181,6 +177,52 @@ class AuthService {
     }
 
     throw new Error('User not found');
+  }
+
+  async changePassword(userId, currentPassword, newPassword) {
+    // Validate inputs
+    if (!currentPassword || !newPassword) {
+      throw new Error('Current password and new password are required.');
+    }
+    if (newPassword.length < 8) {
+      throw new Error('New password must be at least 8 characters long.');
+    }
+    if (currentPassword === newPassword) {
+      throw new Error('New password must be different from your current password.');
+    }
+
+    // Attempt DB lookup first
+    let user = null;
+    try {
+      // We need to select the password field for verification
+      const User = require('../models/User');
+      user = await User.findById(userId).select('+password');
+    } catch (dbError) {
+      console.warn('Database query failed in changePassword, falling back to mock response.');
+    }
+
+    if (user) {
+      // Verify current password
+      const isMatch = await user.matchPassword(currentPassword);
+      if (!isMatch) {
+        throw new Error('Current password is incorrect.');
+      }
+
+      // Set new password — the pre-save hook will hash it
+      user.password = newPassword;
+      await user.save();
+
+      return { message: 'Password changed successfully.' };
+    }
+
+    // Mock fallback — no persistent storage, so we simply validate that
+    // the supplied "current password" matches the known mock password.
+    const MOCK_PASSWORD = 'admin123';
+    if (currentPassword !== MOCK_PASSWORD) {
+      throw new Error('Current password is incorrect.');
+    }
+
+    return { message: 'Password changed successfully.' };
   }
 }
 

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { X, Send, Check } from 'lucide-react';
 
 const AGENTS = [
-  { id: 'sanmati', name: 'Sanmati Jain', display: 'Sanmati Jain' },
-  { id: 'aadish', name: 'Aadish Jain (Founder)', display: 'Aadish Jain' },
   { id: 'neha', name: 'Neha', display: 'Neha' },
   { id: 'khushi', name: 'Khushi Soni', display: 'Khushi Soni' }
 ];

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../../../components/Card';
 import { useLeads } from '../hooks/useLeads';
 import { useActivities } from '../hooks/useActivities';
@@ -10,9 +11,11 @@ import LeadTable from '../components/LeadTable';
 import LeadDetails from '../components/LeadDetails';
 import ActivityModal from '../components/ActivityModal';
 import MessageModal from '../components/MessageModal';
-import { RefreshCw, PlusCircle, Bell, Zap, MoreVertical } from 'lucide-react';
+import LeadConnectionSummary from '../components/LeadConnectionSummary';
+import { RefreshCw, PlusCircle, Bell, MoreVertical, ArrowLeft } from 'lucide-react';
 
 export default function LeadDashboard() {
+  const navigate = useNavigate();
   const {
     leads,
     loading,
@@ -142,62 +145,6 @@ export default function LeadDashboard() {
     return counts;
   }, [leads, latestActivitiesMap]);
 
-  // Simulator
-  const handleSimulateWebsiteInquiry = async () => {
-    const names = [
-      'Gaurav Singhal', 'Mehak Goyal', 'Rohan Bhatia', 'Tanmay Sharma', 
-      'Palak Dwivedi', 'Kshitiz Kapoor', 'Aditi Verma', 'Yash Mittal'
-    ];
-    const phones = [
-      '9811223344', '9560403020', '8877665544', '9910203040', 
-      '8130405060', '9899112233', '9654123456', '7042556677'
-    ];
-    const emails = [
-      'gaurav.s@gmail.com', 'mehak.g@gmail.com', 'rohan.b@gmail.com', 'tanmay.sh@gmail.com',
-      'palak.d@gmail.com', 'kshitiz.k@gmail.com', 'aditi.v@gmail.com', 'yash.m@gmail.com'
-    ];
-    const COURSES = [
-      'Python Programming',
-      'Web Development',
-      'Graphic Design',
-      'Digital Marketing',
-      'Tally & GST',
-      'Video Editing',
-      'Data Analytics',
-      'C++ & Java Masterclass'
-    ];
-    const SOURCES = [
-      'Website',
-      'Course Page',
-      'Facebook',
-      'Instagram',
-      'Popup',
-      'Google Search'
-    ];
-
-    const randomIndex = Math.floor(Math.random() * names.length);
-    const randomCourse = COURSES[Math.floor(Math.random() * COURSES.length)];
-    const randomSource = SOURCES[Math.floor(Math.random() * SOURCES.length)];
-
-    const leadData = {
-      name: names[randomIndex],
-      phone: phones[randomIndex],
-      email: emails[randomIndex],
-      course: randomCourse,
-      source: randomSource,
-      message: `Simulated website inquiry request for ${randomCourse}.`,
-      status: 'New'
-    };
-
-    try {
-      const created = await createLead(leadData);
-      setSelectedLead(created);
-      refreshLeads();
-      refreshStaffSummary();
-    } catch (err) {
-      console.error('Failed to simulate lead:', err);
-    }
-  };
 
   const handleUpdateStatus = async (leadId, nextStatus) => {
     await updateLeadStatus(leadId, nextStatus);
@@ -228,27 +175,28 @@ export default function LeadDashboard() {
   };
 
   return (
-    <div className="bg-[#F9F8F6] text-slate-800 p-6 md:p-8 rounded-3xl min-h-[calc(100vh-140px)] font-sans border border-[#E8E6E1] -mx-6 md:-mx-10 -my-6 md:-my-10 flex flex-col justify-between">
+    <div className="min-h-screen w-full bg-white text-slate-800 p-6 md:p-10 font-sans flex flex-col justify-between">
       
       {/* 1. Header Area */}
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-black text-slate-800 tracking-tight">Leads Management</h1>
-            <p className="text-slate-500 text-xs font-semibold leading-relaxed">
-              Track online inquiries, manage cycle status, follow ups, and staff assignment.
-            </p>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate(-1)} 
+              className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-650 hover:text-slate-850 border border-slate-200 cursor-pointer shadow-sm flex items-center justify-center"
+              title="Back"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-black text-slate-800 tracking-tight">Leads Management</h1>
+              <p className="text-slate-500 text-xs font-semibold leading-relaxed">
+                Track online inquiries, manage cycle status, follow ups, and staff assignment.
+              </p>
+            </div>
           </div>
           
-          {/* Action Tools & User Profile */}
           <div className="flex items-center gap-3 self-start md:self-center">
-            <button 
-              onClick={handleSimulateWebsiteInquiry}
-              className="flex items-center gap-1 bg-[#E31C1C] hover:bg-[#b81414] text-white px-4 py-2 rounded-full font-bold text-xs border-0 shadow-sm transition-all cursor-pointer hover:shadow-md active:scale-95"
-            >
-              <span>+ Simulate Web Lead</span>
-              <Zap size={12} className="fill-current text-white" />
-            </button>
             
             {/* Bell notification button */}
             <div className="relative">
@@ -377,6 +325,10 @@ export default function LeadDashboard() {
               onDeleteLead={handleDelete}
               onActivityAdded={refreshStaffSummary}
             />
+          </div>
+        ) : activeTab === 'analytics' ? (
+          <div className="bg-white border border-[#E8E6E1] rounded-3xl p-6 shadow-sm">
+            <LeadConnectionSummary activities={staffSummary} />
           </div>
         ) : activeTab !== 'online' ? (
           <div className="bg-white border border-[#EBEAE6] rounded-2xl p-16 text-center shadow-sm">

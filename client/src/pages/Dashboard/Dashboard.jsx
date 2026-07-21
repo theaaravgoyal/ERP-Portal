@@ -1,118 +1,371 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { Sparkles, ArrowRight } from 'lucide-react';
-import Card from '../../components/Card';
-import { DynamicIcon } from '../../components/Sidebar';
-import { COLORS } from '../../constants/Colors';
-import { PERMISSIONS } from '../../constants/Permissions';
+import { 
+  Users, 
+  CheckCircle, 
+  Clock, 
+  Award,
+  ArrowRight,
+  User,
+  UserX
+} from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer
+} from 'recharts';
+import { useLeads } from '../../Modules/LeadManagement/hooks/useLeads';
+import { ROUTES } from '../../constants/Routes';
 
-const Dashboard = () => {
-  const { user } = useAuth();
+export default function Dashboard() {
   const navigate = useNavigate();
+  const { leads, loading } = useLeads();
 
-  // Dynamically load permitted modules lists from user profile claims
-  const permittedModules = user?.permissions || [];
+  // Local state for static staff attendance to fulfill interactive toggling
+  const [attendance, setAttendance] = useState({
+    'Aadish Jain (Admin)': true,
+    'Amit Kumar': true,
+    'Rohit Sharma': true,
+    'Neha Joshi': true,
+    'Sanjay Gupta': false,
+    'Aarav Goyal': false,
+  });
 
-  // A helper map to assign specific accent color gradients for card aesthetics
-  const colorSchemes = {
-    [PERMISSIONS.ACCESS_ATTENDANCE]: COLORS.ATTENDANCE,
-    [PERMISSIONS.ACCESS_SITE]: COLORS.SITE_MANAGEMENT,
-    [PERMISSIONS.ACCESS_FEES]: COLORS.FEES_MANAGEMENT,
-    [PERMISSIONS.ACCESS_LEADS]: COLORS.DEFAULT
+  const toggleAttendance = (name) => {
+    setAttendance((prev) => ({
+      ...prev,
+      [name]: !prev[name],
+    }));
   };
 
-  const defaultColorScheme = COLORS.DEFAULT;
+  // Compute stats dynamically from real leads
+  const totalInquiries = leads.length;
+  const activeCount = leads.filter(l => {
+    const status = (l.status || 'New').toLowerCase();
+    return status === 'new' || status === 'connected' || status === 'contacted' || status === 'follow-up' || status === 'followup' || status === 'pending';
+  }).length;
 
-  const descriptions = {
-    [PERMISSIONS.ACCESS_ATTENDANCE]: 'Track personnel logs, manage check-ins/outs, and generate real-time attendance reports.',
-    [PERMISSIONS.ACCESS_SITE]: 'Monitor ongoing site activities, control resources, and organize inventory metrics.',
-    [PERMISSIONS.ACCESS_FEES]: 'Oversee accounts receivables, client billing profiles, receipts, and outstanding dues.',
-    [PERMISSIONS.ACCESS_LEADS]: 'Monitor website inquiries, track counseling logs, and optimize marketing source conversions.'
+  const admissionsCompleted = leads.filter(l => (l.status || '').toLowerCase() === 'converted').length;
+  const scheduledFollowUps = leads.filter(l => {
+    const status = (l.status || '').toLowerCase();
+    return status === 'follow-up' || status === 'followup';
+  }).length;
+
+  const successRate = totalInquiries > 0 ? Math.round((admissionsCompleted / totalInquiries) * 100) : 0;
+
+  // Generate last 8 days including today dynamically
+  const chartData = useMemo(() => {
+    const data = [];
+    const now = new Date();
+    for (let i = 7; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dayStr = date.getDate().toString().padStart(2, '0');
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthStr = monthNames[date.getMonth()];
+      const label = `${dayStr} ${monthStr}`;
+
+      // Count leads created on this day (local date comparison)
+      const count = leads.filter(l => {
+        if (!l.createdAt) return false;
+        const createdDate = new Date(l.createdAt);
+        return createdDate.getDate() === date.getDate() &&
+               createdDate.getMonth() === date.getMonth() &&
+               createdDate.getFullYear() === date.getFullYear();
+      }).length;
+
+      // Use 0.00001 as minimum height so recharts renders empty bars nicely
+      data.push({ name: label, value: count || 0.00001 });
+    }
+    return data;
+  }, [leads]);
+
+  // Compute dynamic YAxis domain based on the max lead count per day
+  const maxVal = Math.max(...chartData.map(d => Math.floor(d.value))) || 2;
+  const yDomain = [0, maxVal < 2 ? 2 : maxVal];
+  const yTicks = maxVal <= 2 ? [0, 1, 2] : undefined;
+
+  // Retrieve top 3 most recent leads
+  const recentLeads = useMemo(() => {
+    return leads.slice(0, 3);
+  }, [leads]);
+
+  // Define status pill colors mapping
+  const getStatusClass = (status) => {
+    const norm = (status || 'new').toLowerCase();
+    if (norm === 'new' || norm === 'pending') {
+      return 'bg-cyan-50 text-cyan-600 border border-cyan-100';
+    }
+    if (norm === 'connected' || norm === 'contacted') {
+      return 'bg-blue-50 text-blue-600 border border-blue-100';
+    }
+    if (norm === 'follow-up' || norm === 'followup') {
+      return 'bg-amber-50 text-amber-600 border border-amber-100';
+    }
+    if (norm === 'converted') {
+      return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
+    }
+    return 'bg-rose-50 text-rose-600 border border-rose-100';
   };
 
-  const defaultDescription = 'Manage administration, process reports, and execute role activities.';
+  const presentCount = Object.values(attendance).filter(Boolean).length;
+  const absentCount = Object.values(attendance).filter(v => !v).length;
 
   return (
-    <div className="space-y-10 font-sans">
-      {/* Welcome Banner */}
-      <Card className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-brand-red/10 to-slate-900">
-        <div className="absolute top-0 right-0 w-80 h-full bg-brand-red/5 blur-[80px] pointer-events-none rounded-full"></div>
-        <div className="relative z-10 space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-red/15 border border-brand-red/20 text-brand-red text-xs font-semibold">
-            <Sparkles size={12} />
-            <span>Enterprise Workspace Active</span>
-          </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
-            Welcome, <span className="bg-gradient-to-r from-brand-red to-rose-400 bg-clip-text text-transparent">{user?.name || 'User'}</span>
-          </h1>
-          <div className="flex flex-wrap items-center gap-2.5 mt-2">
-            <span className="text-xs text-slate-400">Current Role:</span>
-            <span className="px-2.5 py-0.5 rounded-full bg-brand-red/20 border border-brand-red/20 text-brand-red text-[10px] font-bold uppercase tracking-wider">
-              {user?.role || 'Guest'}
-            </span>
-          </div>
-        </div>
-      </Card>
-
-      {/* Grid of Module Cards */}
-      <div className="space-y-6">
+    <div className="bg-white h-[85vh] overflow-hidden text-slate-800 font-sans flex flex-col">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-8">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Your Modules</h2>
-          <p className="text-xs text-slate-500 mt-1">Select an active module card below to begin administrative tasks.</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+            Welcome Back, Aadish! <span className="text-2xl">👋</span>
+          </h1>
+          <p className="text-slate-500 font-medium mt-1 text-sm">
+            Real-time student lead metrics and staff operations.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 bg-[#f4f4f5] px-4 py-2 rounded-full border border-slate-200 shadow-sm">
+          <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
+          <span className="text-xs font-bold text-slate-600">Live Monitoring Mode</span>
+        </div>
+      </div>
+
+      {/* Top Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 shrink-0">
+        {/* Card 1 */}
+        <div className="bg-[#e31b23] rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between h-28">
+          <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+          <div className="flex justify-between items-start z-10">
+            <h3 className="text-white font-bold text-xs tracking-wider">TOTAL INQUIRIES</h3>
+            <div className="bg-white/20 p-2 rounded-xl">
+              <Users size={18} className="text-white" />
+            </div>
+          </div>
+          <div className="flex items-end gap-3 z-10 mt-auto">
+            <span className="text-5xl font-black text-white leading-none">
+              {loading ? '...' : totalInquiries}
+            </span>
+            <div className="bg-white/90 px-3 py-1 rounded-full mb-1">
+              <span className="text-[#e31b23] text-[10px] font-bold">
+                {loading ? '...' : `+${activeCount} Active`}
+              </span>
+            </div>
+          </div>
         </div>
 
-        {permittedModules.length === 0 ? (
-          <Card className="text-center py-12 bg-slate-900/10 border-slate-800">
-            <p className="text-slate-400 font-medium">No permitted modules found for your role profile.</p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {permittedModules.map((mod, index) => {
-              const color = colorSchemes[mod.code] || defaultColorScheme;
-              const desc = descriptions[mod.code] || defaultDescription;
-
-              return (
-                <Card 
-                  key={index}
-                  onClick={() => navigate(mod.route)}
-                  className={`flex flex-col justify-between min-h-[250px] group ${color}`}
-                >
-                  {/* Module Icon and Status */}
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800/80 flex items-center justify-center transition-colors group-hover:border-brand-red/25">
-                      <DynamicIcon name={mod.icon} className="transition-transform duration-300 group-hover:scale-110" />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-slate-400">
-                      Active
-                    </span>
-                  </div>
-
-                  {/* Info Section */}
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-bold text-white tracking-tight group-hover:text-brand-red transition-colors">
-                      {mod.module}
-                    </h3>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      {desc}
-                    </p>
-                  </div>
-
-                  {/* Footer Link Action */}
-                  <div className="mt-6 pt-5 border-t border-slate-800/60 flex items-center justify-between text-xs font-semibold tracking-wide text-slate-400 group-hover:text-white transition-colors">
-                    <span>Launch Module</span>
-                    <div className="w-6 h-6 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center transition-all group-hover:translate-x-1 group-hover:bg-brand-red group-hover:border-brand-red">
-                      <ArrowRight size={12} className="text-slate-400 group-hover:text-white" />
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+        {/* Card 2 */}
+        <div className="bg-white rounded-2xl p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 flex flex-col justify-between h-28">
+          <div className="flex justify-between items-start">
+            <h3 className="text-slate-500 font-bold text-xs tracking-wider">ADMISSIONS COMPLETED</h3>
+            <div className="bg-emerald-50 p-2 rounded-xl border border-emerald-100">
+              <CheckCircle size={18} className="text-emerald-500" />
+            </div>
           </div>
-        )}
+          <div className="flex items-end gap-3 mt-auto">
+            <span className="text-5xl font-black text-slate-800 leading-none">
+              {loading ? '...' : admissionsCompleted}
+            </span>
+            <div className="bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 mb-1">
+              <span className="text-emerald-600 text-[10px] font-bold">Enrolled</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3 */}
+        <div className="bg-white rounded-2xl p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 flex flex-col justify-between h-28">
+          <div className="flex justify-between items-start">
+            <h3 className="text-slate-500 font-bold text-xs tracking-wider">SCHEDULED FOLLOW-UPS</h3>
+            <div className="bg-amber-50 p-2 rounded-xl border border-amber-100">
+              <Clock size={18} className="text-amber-500" />
+            </div>
+          </div>
+          <div className="flex items-end gap-3 mt-auto">
+            <span className="text-5xl font-black text-slate-800 leading-none">
+              {loading ? '...' : scheduledFollowUps}
+            </span>
+            <div className="bg-amber-50 px-3 py-1 rounded-full border border-amber-100 mb-1">
+              <span className="text-amber-600 text-[10px] font-bold">Callbacks</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4 */}
+        <div className="bg-white rounded-2xl p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 flex flex-col justify-between h-28">
+          <div className="flex justify-between items-start">
+            <h3 className="text-slate-500 font-bold text-xs tracking-wider">SUCCESS RATE</h3>
+            <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100">
+              <Award size={18} className="text-indigo-500" />
+            </div>
+          </div>
+          <div className="flex items-end gap-3 mt-auto">
+            <span className="text-5xl font-black text-slate-800 leading-none">
+              {loading ? '...' : `${successRate}%`}
+            </span>
+            <div className="bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 mb-1">
+              <span className="text-indigo-600 text-[10px] font-bold">Admissions</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1 min-h-0">
+        
+        {/* Left Column - Chart */}
+        <div className="xl:col-span-2 bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 flex flex-col h-full overflow-hidden">
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h2 className="text-sm font-black text-slate-800 uppercase tracking-wide">INQUIRY VOLUME OVERVIEW</h2>
+              <p className="text-slate-500 text-xs font-medium mt-1">Chronological student registrations over last 8 days</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3.5 h-3.5 bg-[#e31b23] rounded-sm"></div>
+              <span className="text-xs font-bold text-slate-800">Student Inquiries (Leads)</span>
+            </div>
+          </div>
+          
+          <div className="flex-1 w-full min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                barSize={44}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }}
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }}
+                  domain={yDomain}
+                  ticks={yTicks}
+                />
+                <Bar 
+                  dataKey="value" 
+                  fill="#e31b23" 
+                  radius={[8, 8, 8, 8]}
+                  background={{ fill: '#f4f4f5', radius: [8, 8, 8, 8] }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="xl:col-span-1 flex flex-col gap-6 h-full overflow-hidden">
+          
+          {/* Recent Leads */}
+          <div className="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 flex-1 overflow-hidden flex flex-col">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-sm font-black text-slate-800 uppercase tracking-wide">RECENT LEADS OVERVIEW</h2>
+              </div>
+              <button 
+                onClick={() => navigate(ROUTES.LEAD_MANAGEMENT)}
+                className="text-[#e31b23] text-xs font-bold flex items-center gap-1 hover:underline cursor-pointer border-0 bg-transparent"
+              >
+                View All <ArrowRight size={14} />
+              </button>
+            </div>
+            
+            <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
+              {loading ? (
+                <div className="text-center text-slate-500 text-sm py-4">Loading leads...</div>
+              ) : recentLeads.length === 0 ? (
+                <div className="text-center text-slate-500 text-xs py-4">No leads found. Use Lead Management to simulate or create leads!</div>
+              ) : (
+                recentLeads.map((lead) => {
+                  const leadId = lead._id || lead.id || '';
+                  const shortId = leadId ? `L-${leadId.slice(-4)}` : 'L-New';
+                  return (
+                    <div 
+                      key={leadId} 
+                      onClick={() => navigate(ROUTES.LEAD_MANAGEMENT)}
+                      className="bg-[#f8f9fa] border border-slate-200 rounded-xl p-4 flex justify-between items-center relative overflow-hidden group cursor-pointer hover:border-slate-350 hover:shadow-sm transition-all"
+                    >
+                      <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-slate-200 rounded-r-xl"></div>
+                      <div className="min-w-0 flex-1 pr-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-bold text-slate-800 text-sm truncate">{lead.name}</h4>
+                          <span className="text-[10px] text-slate-400 font-bold shrink-0">{shortId}</span>
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium truncate">{lead.course}</p>
+                      </div>
+                      <div className={`px-2.5 py-1 rounded-lg shrink-0 ${getStatusClass(lead.status)}`}>
+                        <span className="text-[9px] font-black uppercase tracking-wider">{lead.status || 'New'}</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Staff Attendance */}
+          <div className="bg-white rounded-2xl max-h-[15rem] p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-200 overflow-hidden flex flex-col">
+            <div className="flex justify-between items-start mb-5 pb-4 border-b border-slate-100">
+              <div>
+                <h2 className="text-sm font-black text-slate-800 uppercase tracking-wide">STAFF ATTENDANCE OVERVIEW</h2>
+                <p className="text-slate-500 text-xs font-medium mt-1">Tap names to toggle status for today</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-2 py-1 rounded-md border border-emerald-100">{presentCount} Present</span>
+                <span className="bg-rose-50 text-rose-600 text-[10px] font-black px-2 py-1 rounded-md border border-rose-100">{absentCount} Absent</span>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto flex-1 min-h-0">
+              {/* Present Staff */}
+              <div className="mb-5">
+                <div className="flex items-center gap-2 text-emerald-600 mb-3">
+                  <User size={14} className="stroke-[2.5]" />
+                  <span className="text-xs font-black tracking-wide">PRESENT STAFF ({presentCount})</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {Object.entries(attendance).filter(([_, isPresent]) => isPresent).map(([name]) => (
+                    <div 
+                      key={name}
+                      onClick={() => toggleAttendance(name)}
+                      className="bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                      <span className="text-xs font-bold text-slate-700 truncate">{name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Absent Staff */}
+              <div>
+                <div className="flex items-center gap-2 text-rose-500 mb-3">
+                  <UserX size={14} className="stroke-[2.5]" />
+                  <span className="text-xs font-black tracking-wide">ABSENT STAFF ({absentCount})</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {Object.entries(attendance).filter(([_, isPresent]) => !isPresent).map(([name]) => (
+                    <div 
+                      key={name}
+                      onClick={() => toggleAttendance(name)}
+                      className="bg-rose-50/50 hover:bg-rose-50 border border-rose-100 rounded-lg px-3 py-2 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+                      <span className="text-xs font-bold text-slate-700 truncate">{name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
-};
+}
 
-export default Dashboard;

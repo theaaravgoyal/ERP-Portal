@@ -49,24 +49,51 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
-      {/* Decorative Blur Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-brand-red/10 blur-[128px] pointer-events-none"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-brand-red/10 blur-[128px] pointer-events-none"></div>
+    <div className="min-h-screen relative flex justify-center items-center font-sans bg-white overflow-hidden">
 
-      <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10">
+      {/* ── Decorative arch lines ──────────────────────────────── */}
+      <svg
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 w-full h-full"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="none"
+        viewBox="0 0 1440 900"
+      >
+        {/* Outer arch */}
+        <path
+          d="M -80 900 Q 720 260 1520 900"
+          fill="none"
+          stroke="white"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          opacity="0.75"
+        />
+        {/* Inner arch — slightly tighter curve, runs parallel */}
+        <path
+          d="M -80 900 Q 720 360 1520 900"
+          fill="none"
+          stroke="white"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          opacity="0.75"
+        />
+      </svg>
+      {/* ─────────────────────────────────────────────────────── */}
+
+      <div className="relative z-10 w-full max-w-md bg-white backdrop-blur-xl border border-black/10 py-20 px-10 rounded-2xl shadow-2xl">
         {/* Portal Branding */}
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-red to-brand-red-hover flex items-center justify-center font-bold text-white text-lg mx-auto mb-4 shadow-lg shadow-brand-red/20">
-            EP
+        <div className="flex flex-col gap-3 items-center justify-center text-center mb-10">
+          <div className=""><img src="/logo.png" width='75px' alt="Jains Computer Logo" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white mb-2">{APP_CONFIG.NAME}</h1>
-          <p className="text-sm text-slate-400">Sign in to access your administrative dashboard</p>
+          <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800">{APP_CONFIG.NAME}</h1>
+          <p className="text-sm text-slate-600">Sign in to access your administrative dashboard</p>
+          </div>
         </div>
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-455 flex items-start gap-3 text-sm">
+          <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 flex items-start gap-3 text-sm">
             <AlertCircle className="shrink-0 mt-0.5" size={18} />
             <span>{errorMessage}</span>
           </div>
@@ -108,7 +135,7 @@ const Login = () => {
           </div>
 
           {/* Remember me or quick credentials tip */}
-          <div className="p-3 bg-slate-950/50 rounded-lg border border-slate-800/60 text-xs text-slate-500 text-center">
+          <div className="p-3 bg-rose-50 rounded-lg border border-rose-100 text-xs text-slate-500 text-center">
             Demo Credentials: <span className="font-semibold text-brand-red font-mono">superadmin@erp.com</span> / <span className="font-semibold text-brand-red font-mono">admin123</span>
           </div>
 
@@ -116,9 +143,9 @@ const Login = () => {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full font-semibold"
+            className="w-full font-semibold mt-10"
           >
-            {isSubmitting ? 'Signing in...' : 'Sign In'}
+            {isSubmitting ? 'Signing in...' : 'Get Started'}
           </Button>
         </form>
       </div>

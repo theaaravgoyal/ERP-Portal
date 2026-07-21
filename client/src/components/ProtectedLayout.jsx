@@ -1,35 +1,27 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
-import { useAuth } from '../context/AuthContext';
 
 const ProtectedLayout = ({ children }) => {
-  const { user, logout } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row font-sans">
-      <Sidebar
-        user={user}
-        logout={logout}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-      />
+    // Full-screen container with clean white background
+    <div className="min-h-screen bg-white text-slate-700 font-sans">
       
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <Navbar
-          user={user}
-          mobileMenuOpen={mobileMenuOpen}
-          setMobileMenuOpen={setMobileMenuOpen}
-        />
-        
-        <main className="flex-1 overflow-y-auto flex flex-col justify-between">
-          <div className="p-6 md:p-10 max-w-7xl mx-auto w-full flex-1">
+      {/* Floating sidebar — fixed, floats over the background seamlessly */}
+      <Sidebar />
+
+      {/* Full-width column — pl offsets content from behind the sidebar.
+          The background continues edge-to-edge so there is no hard cut. */}
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+
+        <main className="flex items-center justify-center flex-col overflow-y-auto">
+          <div className="p-6 md:p-10 self-end w-[95vw]">
             {children}
           </div>
-          
+
           {/* Shared Enterprise Footer */}
-          <footer className="py-5 px-8 bg-slate-950 border-t border-slate-900 text-center text-xs text-slate-650">
+          <footer className="py-[2vh] px-8 bg-slate-50 border-t w-full border-slate-200 text-center text-xs text-slate-400">
             <p>&copy; {new Date().getFullYear()} ERP Portal. All rights reserved. Scalable Enterprise Edition.</p>
           </footer>
         </main>

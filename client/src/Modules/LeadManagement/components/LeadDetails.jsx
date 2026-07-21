@@ -7,8 +7,6 @@ import WhatsAppWorkspaceModal from './WhatsAppWorkspaceModal';
 import ActivityModal from './ActivityModal';
 
 const STAFF_MEMBERS = [
-  "Sanmati Jain",
-  "Aadish Jain",
   "Neha",
   "Khushi Soni",
 ];

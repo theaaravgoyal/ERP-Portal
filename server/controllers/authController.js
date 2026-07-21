@@ -43,3 +43,23 @@ exports.logout = async (req, res) => {
     message: 'Logged out successfully'
   });
 };
+
+// @desc    Change authenticated user's password
+// @route   POST /api/auth/change-password
+// @access  Private
+exports.changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Current password and new password are required.' });
+  }
+
+  try {
+    const result = await authService.changePassword(req.user.id, currentPassword, newPassword);
+    return res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    console.error('Change password controller error:', error.message);
+    const status = error.message.includes('incorrect') ? 401 : 400;
+    return res.status(status).json({ success: false, message: error.message });
+  }
+};
