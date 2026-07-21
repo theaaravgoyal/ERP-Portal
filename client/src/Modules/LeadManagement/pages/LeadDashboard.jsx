@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../../../components/Card';
 import { useLeads } from '../hooks/useLeads';
 import { useActivities } from '../hooks/useActivities';
@@ -10,9 +11,11 @@ import LeadTable from '../components/LeadTable';
 import LeadDetails from '../components/LeadDetails';
 import ActivityModal from '../components/ActivityModal';
 import MessageModal from '../components/MessageModal';
-import { RefreshCw, PlusCircle, Bell, Zap, MoreVertical } from 'lucide-react';
+import LeadConnectionSummary from '../components/LeadConnectionSummary';
+import { RefreshCw, PlusCircle, Bell, MoreVertical, ArrowLeft } from 'lucide-react';
 
 export default function LeadDashboard() {
+  const navigate = useNavigate();
   const {
     leads,
     loading,
@@ -33,6 +36,7 @@ export default function LeadDashboard() {
 
   // Selected lead for full details view
   const [selectedLead, setSelectedLead] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Active tab state
   const [activeTab, setActiveTab] = useState('online');
@@ -56,6 +60,35 @@ export default function LeadDashboard() {
     isFiltered,
     latestActivitiesMap
   } = useLeadFilters(leads, staffSummary);
+
+  // Compute today's follow-up reminders
+  const todayFollowUps = useMemo(() => {
+    const list = [];
+    if (!leads || !Array.isArray(leads)) return list;
+    leads.forEach((lead) => {
+      if (!lead) return;
+      const leadId = lead._id || lead.id;
+      if (!leadId) return;
+      const latest = latestActivitiesMap && latestActivitiesMap[leadId];
+      if (latest && latest.followUpDate) {
+        const followDate = new Date(latest.followUpDate);
+        const today = new Date();
+        const sameDay = followDate.getDate() === today.getDate() &&
+                        followDate.getMonth() === today.getMonth() &&
+                        followDate.getFullYear() === today.getFullYear();
+        const isOverdue = followDate < today;
+        if (sameDay || isOverdue) {
+          list.push({
+            lead,
+            followUpDate: latest.followUpDate,
+            isOverdue,
+            time: followDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+          });
+        }
+      }
+    });
+    return list;
+  }, [leads, latestActivitiesMap]);
 
   // States for row action overlays
   const [rowActionLead, setRowActionLead] = useState(null);
@@ -84,89 +117,34 @@ export default function LeadDashboard() {
   const statsCounts = useMemo(() => {
     const counts = {
       New: 0,
-      Contacted: 0,
+      Connected: 0,
       'Follow-up': 0,
       Converted: 0,
       'Not Interested': 0,
     };
     leads.forEach((l) => {
+      const leadId = l._id || l.id;
+      const hasActivity = latestActivitiesMap && latestActivitiesMap[leadId];
       const status = l.status || 'New';
-      if (counts[status] !== undefined) {
-        counts[status] += 1;
+      const norm = status.toLowerCase();
+      
+      if ((norm === 'new' || norm === 'pending') && hasActivity) {
+        counts.Connected += 1;
+      } else if (norm === 'new' || norm === 'pending') {
+        counts.New += 1;
+      } else if (norm === 'connected' || norm === 'contacted') {
+        counts.Connected += 1;
+      } else if (norm === 'converted') {
+        counts.Converted += 1;
+      } else if (norm === 'follow-up' || norm === 'followup') {
+        counts['Follow-up'] += 1;
       } else {
-        const norm = status.toLowerCase();
-        if (norm === 'pending' || norm === 'new') {
-          counts.New += 1;
-        } else if (norm === 'contacted') {
-          counts.Contacted += 1;
-        } else if (norm === 'converted') {
-          counts.Converted += 1;
-        } else if (norm === 'follow-up' || norm === 'followup') {
-          counts['Follow-up'] += 1;
-        } else {
-          counts['Not Interested'] += 1;
-        }
+        counts['Not Interested'] += 1;
       }
     });
     return counts;
-  }, [leads]);
+  }, [leads, latestActivitiesMap]);
 
-  // Simulator
-  const handleSimulateWebsiteInquiry = async () => {
-    const names = [
-      'Gaurav Singhal', 'Mehak Goyal', 'Rohan Bhatia', 'Tanmay Sharma', 
-      'Palak Dwivedi', 'Kshitiz Kapoor', 'Aditi Verma', 'Yash Mittal'
-    ];
-    const phones = [
-      '9811223344', '9560403020', '8877665544', '9910203040', 
-      '8130405060', '9899112233', '9654123456', '7042556677'
-    ];
-    const emails = [
-      'gaurav.s@gmail.com', 'mehak.g@gmail.com', 'rohan.b@gmail.com', 'tanmay.sh@gmail.com',
-      'palak.d@gmail.com', 'kshitiz.k@gmail.com', 'aditi.v@gmail.com', 'yash.m@gmail.com'
-    ];
-    const COURSES = [
-      'Python Programming',
-      'Web Development',
-      'Graphic Design',
-      'Digital Marketing',
-      'Tally & GST',
-      'Video Editing',
-      'Data Analytics',
-      'C++ & Java Masterclass'
-    ];
-    const SOURCES = [
-      'Website',
-      'Course Page',
-      'Facebook',
-      'Instagram',
-      'Popup',
-      'Google Search'
-    ];
-
-    const randomIndex = Math.floor(Math.random() * names.length);
-    const randomCourse = COURSES[Math.floor(Math.random() * COURSES.length)];
-    const randomSource = SOURCES[Math.floor(Math.random() * SOURCES.length)];
-
-    const leadData = {
-      name: names[randomIndex],
-      phone: phones[randomIndex],
-      email: emails[randomIndex],
-      course: randomCourse,
-      source: randomSource,
-      message: `Simulated website inquiry request for ${randomCourse}.`,
-      status: 'New'
-    };
-
-    try {
-      const created = await createLead(leadData);
-      setSelectedLead(created);
-      refreshLeads();
-      refreshStaffSummary();
-    } catch (err) {
-      console.error('Failed to simulate lead:', err);
-    }
-  };
 
   const handleUpdateStatus = async (leadId, nextStatus) => {
     await updateLeadStatus(leadId, nextStatus);
@@ -189,7 +167,7 @@ export default function LeadDashboard() {
         ...data
       });
       if (rowActionLead.status === 'New' || rowActionLead.status === 'pending') {
-        await handleUpdateStatus(rowActionLead._id || rowActionLead.id, 'Contacted');
+        await handleUpdateStatus(rowActionLead._id || rowActionLead.id, 'Connected');
       }
       setRowActionLead(null);
       refreshStaffSummary();
@@ -197,41 +175,106 @@ export default function LeadDashboard() {
   };
 
   return (
-    <div className="bg-white text-slate-800 p-6 md:p-8 rounded-3xl min-h-[calc(100vh-140px)] font-sans  -mx-6 md:-mx-10 -my-6 md:-my-10 flex flex-col justify-between">
+    <div className="min-h-screen w-full bg-white text-slate-800 p-6 md:p-10 font-sans flex flex-col justify-between">
       
       {/* 1. Header Area */}
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-black text-slate-800 tracking-tight">Leads Management</h1>
-            <p className="text-slate-500 text-xs font-semibold leading-relaxed">
-              Track online inquiries, manage cycle status, follow ups, and staff assignment.
-            </p>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate(-1)} 
+              className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-650 hover:text-slate-850 border border-slate-200 cursor-pointer shadow-sm flex items-center justify-center"
+              title="Back"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-black text-slate-800 tracking-tight">Leads Management</h1>
+              <p className="text-slate-500 text-xs font-semibold leading-relaxed">
+                Track online inquiries, manage cycle status, follow ups, and staff assignment.
+              </p>
+            </div>
           </div>
           
-          {/* Action Tools & User Profile */}
           <div className="flex items-center gap-3 self-start md:self-center">
-            <button 
-              onClick={handleSimulateWebsiteInquiry}
-              className="flex items-center gap-1 bg-[#E31C1C] hover:bg-[#b81414] text-white px-4 py-2 rounded-full font-bold text-xs border-0 shadow-sm transition-all cursor-pointer hover:shadow-md active:scale-95"
-            >
-              <span>+ Simulate Web Lead</span>
-              <Zap size={12} className="fill-current text-white" />
-            </button>
             
             {/* Bell notification button */}
-            <button className="bg-white border border-[#DEDCD8] hover:bg-[#F0EEEA] text-slate-650 hover:text-slate-850 p-2 rounded-full transition-colors relative cursor-pointer shadow-sm w-9 h-9 flex items-center justify-center">
-              <Bell size={15} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-[#E31C1C] rounded-full" />
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`bg-white border border-[#DEDCD8] hover:bg-[#F0EEEA] text-slate-650 hover:text-slate-850 p-2 rounded-full transition-colors relative cursor-pointer shadow-sm w-9 h-9 flex items-center justify-center ${
+                  todayFollowUps.some(item => item.isOverdue) 
+                    ? 'animate-bell-pulse-red' 
+                    : todayFollowUps.length > 0 
+                    ? 'animate-bell-ring' 
+                    : ''
+                }`}
+                title="Notifications"
+              >
+                <Bell size={15} />
+                {todayFollowUps.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#E31C1C] text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-md">
+                    {todayFollowUps.length}
+                  </span>
+                )}
+              </button>
+              
+              {showNotifications && (
+                <div className="absolute right-0 mt-2.5 w-80 bg-white border border-[#E8E6E1] rounded-2xl shadow-xl z-50 p-4 space-y-3 animate-fade-in">
+                  <div className="flex items-center justify-between border-b border-[#EBEAE6] pb-2">
+                    <span className="text-xs font-black text-slate-800 tracking-tight">Today's Follow-up Tasks</span>
+                    <span className="text-[9px] bg-rose-50 text-[#E31C1C] px-2 py-0.5 rounded-full font-black border border-rose-100 uppercase tracking-wider">{todayFollowUps.length} Pending</span>
+                  </div>
+                  
+                  <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
+                    {todayFollowUps.length === 0 ? (
+                      <div className="py-6 text-center text-slate-450 text-xs font-semibold leading-relaxed">
+                        🎉 No follow-up reminders scheduled for today!
+                      </div>
+                    ) : (
+                      todayFollowUps.map(({ lead, time, isOverdue }) => (
+                        <div 
+                          key={lead._id || lead.id}
+                          onClick={() => {
+                            setSelectedLead(lead);
+                            setShowNotifications(false);
+                          }}
+                          className="p-3 bg-[#FAF9F6] hover:bg-[#FFF5F5] border border-[#E8E6E1] hover:border-[#FCD4D4] rounded-xl cursor-pointer transition-all space-y-1 group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-800 group-hover:text-[#E31C1C] transition-colors">{lead.name}</span>
+                            {isOverdue ? (
+                              <span className="text-[9px] text-white font-black uppercase tracking-wider bg-[#E31C1C] px-2 py-0.5 rounded-md animate-pulse">
+                                Overdue • {time}
+                              </span>
+                            ) : (
+                              <span className="text-[9px] text-[#E31C1C] font-black uppercase tracking-wider bg-[#FFF5F5] border border-[#FCD4D4] px-1.5 py-0.2 rounded-md">
+                                {time}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-slate-500 font-semibold leading-normal">
+                            Please contact regarding <span className="text-slate-700 font-bold">{lead.course}</span> today.
+                          </p>
+                          <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest pt-1 border-t border-[#EBEAE6]/40 mt-1 flex items-center gap-1">
+                            <span>📞 Call or Send message</span>
+                            <span className="text-[#E31C1C] opacity-0 group-hover:opacity-100 transition-opacity ml-auto">View Profile →</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Profile Avatar */}
             <div className="flex items-center gap-2.5 pl-2 border-l border-[#DEDCD8]">
               <div className="w-9 h-9 rounded-full bg-[#E31C1C] text-white font-black text-sm flex items-center justify-center shrink-0 shadow-inner">
-                AG
+                AJ
               </div>
               <div className="flex flex-col hidden sm:flex">
-                <span className="text-slate-800 text-xs font-black leading-tight">Aarav Goyal</span>
+                <span className="text-slate-800 text-xs font-black leading-tight">Addish jain</span>
                 <span className="text-[#E31C1C] text-[9px] font-black tracking-wider uppercase mt-0.5">ADMIN</span>
               </div>
             </div>
@@ -280,7 +323,12 @@ export default function LeadDashboard() {
               onClose={() => setSelectedLead(null)}
               onUpdateStatus={handleUpdateStatus}
               onDeleteLead={handleDelete}
+              onActivityAdded={refreshStaffSummary}
             />
+          </div>
+        ) : activeTab === 'analytics' ? (
+          <div className="bg-white border border-[#E8E6E1] rounded-3xl p-6 shadow-sm">
+            <LeadConnectionSummary activities={staffSummary} />
           </div>
         ) : activeTab !== 'online' ? (
           <div className="bg-white border border-[#EBEAE6] rounded-2xl p-16 text-center shadow-sm">
@@ -379,7 +427,7 @@ export default function LeadDashboard() {
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 bg-[#f59e0b] rounded-full inline-block" />
-              <span className="text-slate-600">{statsCounts.Contacted} Contacted</span>
+              <span className="text-slate-600">{statsCounts.Connected} Connected</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 bg-[#a855f7] rounded-full inline-block" />

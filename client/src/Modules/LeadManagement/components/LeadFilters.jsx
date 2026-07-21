@@ -21,8 +21,6 @@ const SOURCES = [
 ];
 
 const STAFF_MEMBERS = [
-  "Sanmati Jain",
-  "Aadish Jain",
   "Neha",
   "Khushi Soni",
 ];

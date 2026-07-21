@@ -26,7 +26,7 @@ const Navbar = () => {
   }, []);
 
   return (
-    <header className="bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-rose-100 px-6 py-4 flex items-center justify-between gap-4 h-[8vh] shrink-0 shadow-sm shadow-rose-100/40">
+    <header className="bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 px-6 py-4 flex items-center justify-between gap-4 h-[8vh] shrink-0 shadow-sm shadow-slate-100/40">
       {/* Brand */}
       <div className="flex items-center gap-3">
         <span className="font-bold text-xl text-slate-700 hidden md:block">
@@ -44,7 +44,7 @@ const Navbar = () => {
 
       <div className="flex items-center gap-4">
         {/* Notifications */}
-        <button className="p-2 text-rose-300 hover:text-brand-red rounded-lg hover:bg-rose-50 transition-colors relative">
+        <button className="p-2 text-slate-400 hover:text-brand-red rounded-lg hover:bg-slate-50 transition-colors relative">
           <Bell size={20} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-red"></span>
         </button>
@@ -52,31 +52,31 @@ const Navbar = () => {
         {/* User profile with dropdown */}
         <div className="relative" ref={dropdownRef}>
           <div 
-            className="flex items-center gap-3 border-l border-rose-100 pl-4 select-none cursor-pointer group"
+            className="flex items-center gap-3 border-l border-slate-200 pl-4 select-none cursor-pointer group"
             onClick={() => setDropdownOpen(!dropdownOpen)}
           >
             <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-slate-700 leading-tight group-hover:text-brand-red transition-colors">{user?.name}</p>
-              <p className="text-[10px] text-rose-300 font-medium tracking-wide uppercase mt-0.5">{user?.role}</p>
+              <p className="text-[10px] text-slate-400 font-medium tracking-wide uppercase mt-0.5">{user?.role}</p>
             </div>
-            <div className="w-9 h-9 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center text-brand-red font-bold text-sm transition-transform duration-200 group-hover:scale-105 shadow-sm">
+            <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-brand-red font-bold text-sm transition-transform duration-200 group-hover:scale-105 shadow-sm">
               {user?.name ? user.name[0].toUpperCase() : 'U'}
             </div>
           </div>
 
           {/* Dropdown Menu */}
           <div 
-            className={`absolute right-0 mt-3 w-48 bg-white border border-rose-100 rounded-xl shadow-lg shadow-rose-100/50 py-2 transition-all duration-300 origin-top-right z-50
+            className={`absolute right-0 mt-3 w-48 bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-100/50 py-2 transition-all duration-300 origin-top-right z-50
               ${dropdownOpen ? 'transform opacity-100 scale-100 translate-y-0' : 'transform opacity-0 scale-95 -translate-y-2 pointer-events-none'}
             `}
           >
-            <div className="px-4 py-2 border-b border-rose-50 mb-1 sm:hidden">
+            <div className="px-4 py-2 border-b border-slate-100 mb-1 sm:hidden">
               <p className="text-sm font-semibold text-slate-700 truncate">{user?.name}</p>
-              <p className="text-[10px] text-rose-400 font-medium tracking-wide uppercase mt-0.5">{user?.role}</p>
+              <p className="text-[10px] text-slate-400 font-medium tracking-wide uppercase mt-0.5">{user?.role}</p>
             </div>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-brand-red hover:bg-rose-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-brand-red hover:bg-slate-50 transition-colors"
             >
               <LogOut size={16} />
               <span>Sign Out</span>

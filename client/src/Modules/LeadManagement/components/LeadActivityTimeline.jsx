@@ -2,9 +2,6 @@ import React from 'react';
 import { Calendar, Edit2, Trash2, ClipboardList } from 'lucide-react';
 
 const STAFF_COLORS = {
-  "Sanmati Jain": "bg-brand-red text-white",
-  "Sanmate Jain": "bg-brand-red text-white",
-  "Aadish Jain": "bg-sky-500 text-white",
   "Neha": "bg-purple-500 text-white",
   "Khushi Soni": "bg-emerald-505 text-white",
 };

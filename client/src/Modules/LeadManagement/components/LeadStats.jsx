@@ -12,8 +12,8 @@ export default function LeadStats({ counts, activeStatusFilter, setActiveStatusF
       activeBorder: 'border-blue-500 ring-2 ring-blue-500/20'
     },
     {
-      status: 'Contacted',
-      label: 'Contacted',
+      status: 'Connected',
+      label: 'Connected',
       icon: PhoneCall,
       color: 'text-amber-600',
       bgColor: 'bg-amber-50',
@@ -85,7 +85,7 @@ export default function LeadStats({ counts, activeStatusFilter, setActiveStatusF
             {isActive && (
               <div className={`absolute bottom-0 left-0 right-0 h-1 ${
                 cat.status === 'New' ? 'bg-blue-500' :
-                cat.status === 'Contacted' ? 'bg-amber-500' :
+                cat.status === 'Connected' || cat.status === 'Contacted' ? 'bg-amber-500' :
                 cat.status === 'Follow-up' ? 'bg-purple-500' :
                 cat.status === 'Converted' ? 'bg-emerald-500' : 'bg-rose-500'
               }`} />

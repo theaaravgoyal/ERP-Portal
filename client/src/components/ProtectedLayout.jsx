@@ -21,7 +21,7 @@ const ProtectedLayout = ({ children }) => {
           </div>
 
           {/* Shared Enterprise Footer */}
-          <footer className="py-[2vh] px-8 bg-slate-50 border-t w-full border-rose-100 text-center text-xs text-slate-400">
+          <footer className="py-[2vh] px-8 bg-slate-50 border-t w-full border-slate-200 text-center text-xs text-slate-400">
             <p>&copy; {new Date().getFullYear()} ERP Portal. All rights reserved. Scalable Enterprise Edition.</p>
           </footer>
         </main>

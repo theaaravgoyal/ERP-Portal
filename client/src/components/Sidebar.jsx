@@ -25,21 +25,21 @@ const Sidebar = () => {
         fixed left-4 top-1/2 -translate-y-1/2 z-50
         flex flex-col items-center gap-1
         bg-white/90 backdrop-blur-md
-        border border-rose-100
+        border border-slate-200
         rounded-2xl
-        shadow-xl shadow-rose-100/50
+        shadow-xl shadow-slate-100/50
         px-2 py-4
         w-[68px]
         h-[80vh]
       "
     >
       {/* Logo mark */}
-      <Link to={ROUTES.DASHBOARD} className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center mb-3 shadow-sm shadow-rose-200/30 shrink-0">
+      <Link to={ROUTES.DASHBOARD} className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-3 shadow-sm shadow-slate-200/30 shrink-0">
         <img src="/logo.png" alt="JCMS" className="h-5 w-5 object-contain" />
       </Link>
 
       {/* Divider */}
-      <div className="w-8 h-px bg-rose-100 mb-2" />
+      <div className="w-8 h-px bg-slate-200 mb-2" />
 
       {/* Nav items */}
       <nav className="flex flex-col items-center w-full gap-3 flex-1 pb-2">
@@ -56,8 +56,8 @@ const Sidebar = () => {
                 transition-all duration-200
                 ${name === 'Settings' ? 'mt-auto' : ''}
                 ${isActive
-                  ? 'bg-rose-50 border border-rose-200 shadow-sm shadow-rose-100/60 text-brand-red'
-                  : 'text-slate-400 hover:bg-rose-50/70 hover:text-rose-400 border border-transparent hover:border-rose-100'
+                  ? 'bg-slate-100 border border-slate-200 shadow-sm shadow-slate-150/60 text-brand-red'
+                  : 'text-slate-400 hover:bg-slate-50 hover:text-slate-650 border border-transparent hover:border-slate-200'
                 }
               `}
             >
